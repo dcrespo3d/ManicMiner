@@ -2,7 +2,7 @@
 
 HTML5 remake of Spectrum classic Manic Miner, made just for fun and learning.
 
-[Play Manic Miner HTML5 remake](./htdocs/index.html)
+[Play Manic Miner HTML5 remake](https://dcrespo3d.github.io/ManicMiner/htdocs/index.html)
 
 Almost complete HTML5 remake of Manic Miner, all levels and enemies are (almost) identical to Spectrum version, except levels 19 and 20 (Solar Power Generator and The Final Barrier).
 
