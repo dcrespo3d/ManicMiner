@@ -9,6 +9,9 @@ var debug_slow_motion_factor = 1;
 
 var willy_invincible = false;
 
+// global flag to enable/disable music using the pause key
+window.music_enabled = true;
+
 var createLevel = function(level) {
     
     var leftKey, rightKey, upKey;
@@ -58,7 +61,7 @@ var createLevel = function(level) {
 
     level.create = function() {
 
-        console.log("CREATING LEVEL");
+        // console.log("CREATING LEVEL");
 
         level_music = game.add.audio('level_music', 0.25, true);
         willy_killed_sound = game.add.audio('willy_killed', 0.9);
@@ -79,6 +82,7 @@ var createLevel = function(level) {
         update_active = true;
         update_air_score_active = false;
         paused = false;
+        level_music_played = false;
 
         miner_willy = null;
         exit_sprite = null;
@@ -95,13 +99,30 @@ var createLevel = function(level) {
         game.time.desiredFps = 12.5;
 
         // level music
-        level_music.play();
+        if (music_enabled) {
+            level_music_played = true;
+            level_music.play();
+        }
 
         // pause action
         var pauseAction = function() {
             paused = !paused;
-            if (paused) level_music.pause();
-            else        level_music.resume();
+            if (paused)
+            {
+                if (music_enabled) {
+                    level_music.pause();
+                }
+                music_enabled = !music_enabled;
+            }
+            else if (music_enabled) {
+                if (level_music_played) {
+                    level_music.resume();
+                }
+                else {
+                    level_music_played = true;
+                    level_music.play();
+                }
+            }
         }
 
         // game keys
@@ -349,7 +370,7 @@ var createLevel = function(level) {
         willy_killed_sound.play();
 
         update_active = false;
-        console.log("Willy Died!");
+        // console.log("Willy Died!");
         game.camera.flash(0xFF0000,120);
         setTimeout(function(){
             lives_counter--;
@@ -428,7 +449,7 @@ var createLevel = function(level) {
                 tilemap.putTileAt(i, j, tile);
             }
         }
-        debugTilemapLogType(tilemap);
+        // debugTilemapLogType(tilemap);
         return tilemap;
     }
 
