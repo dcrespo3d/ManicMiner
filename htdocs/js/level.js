@@ -327,8 +327,6 @@ var createLevel = function(level) {
     level.onWillyExited = function() {
         update_active = false;
         exit_open = false;
-        score_points += 1000;
-        panel.putScore(score_points);
 
         mask = game.add.sprite(0, 0, 'whiteblock');
         mask.width = 256;
