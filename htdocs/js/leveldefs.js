@@ -466,7 +466,7 @@ var level14 = createLevel({
     //   0    0    1    1    2    2    3 
     ],
     exitPos: [15,0],
-    itemPos: [[23,2],[3,8],[27,7],[16,7],[31,1311]],
+    itemPos: [[23,2],[3,8],[27,7],[16,7]],
     minerPos: [29,13,true,104],
     horizEnemyDefs: [
 
