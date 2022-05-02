@@ -19,14 +19,13 @@ function createMiner(x, y, lookingRight, theLevel) {
     var jumped = false;
     var extra_step = false;
 
-    var landed_vertically = false;  // landed vertically in this frame
-    var prev_lv = false;            // landed vertically in previous frame
-    var prev_2_lv = false;          // landed vertically 2 frames ago
-    var inhibit_conveyor = false;
+    var prevConveyorForce = 0;
     var conveyorForce = 0;
+    var freezeOnConv = false;
 
-    var speedX = 0;
+    var flySpeedX = 0;
     var speedY = 0;
+    var terminalSpeedY = false;
 
     var forceX = 0;
     var forceY = 0;
@@ -81,20 +80,21 @@ function createMiner(x, y, lookingRight, theLevel) {
         mw.y = posY;
 
         mw.colrect.x = 1+posX;
+        if (!isLookingRight) mw.colrect.x += 2;
         mw.colrect.y = 1+posY;
-        mw.colrect.width = 8;
+        mw.colrect.width = 6;
         mw.colrect.height = 15;
     }
 
     updatePos();
 
     mw.evaluate = function(theTilemap, leftKeyDown, rightKeyDown, upKeyDown) {
-
         tilemap = theTilemap;
 
         on_floor_prev = on_floor;
 
         check_on_floor();
+        prevConveyorForce = conveyorForce;
         check_on_conveyor();
         check_under_wall();
 
@@ -106,34 +106,51 @@ function createMiner(x, y, lookingRight, theLevel) {
             level.onWillyDied();
         }
 
-//        console.log("on_floor:", on_floor, "on_floor_prev:", on_floor_prev);
-
-//        if (on_floor) { console.log("ON_FLOOR");         }
-//        else          { console.log("NOoOoOoT ON_FLOOR"); }
-
         if (on_floor) {
             if (!extra_step) {
-                // when both horizontal keys pressed or released, stop inhibiting conveyors
-                if (!(leftKeyDown ^ rightKeyDown)) {
-                    inhibit_conveyor = false;
-                    landed_vertically = prev_lv = prev_2_lv = false;
+                // assign 0 force when no keys, -1 for left, 1 for right, 0 for both
+                let keyForceX = 0;
+                if  (leftKeyDown) keyForceX -= 1;
+                if (rightKeyDown) keyForceX += 1;
+
+                // for being able to start walking against conveyor
+                if (on_floor_prev && (keyForceX != 0) && prevConveyorForce == 0) {
+                    // console.log('walk against conveyor')
+                    conveyorForce = 0;
                 }
 
-                // assign 0 force when no keys, -1 for left, 1 for right, 0 for both
-                forceX = 0;
-                if  (leftKeyDown) forceX -= 1;
-                if (rightKeyDown) forceX += 1;
-
-                // conveyor logic. 
-                if (conveyorForce != 0 && !prev_2_lv) {
-                    if (inhibit_conveyor) {
-                        forceX += conveyorForce;
-                        if (forceX < -1) forceX = -1;
-                        if (forceX >  1) forceX =  1;
+                // conveyor logic
+                if (conveyorForce != 0) {
+                    if (keyForceX + conveyorForce == 0) {
+                        // console.log('flySpeedX', flySpeedX);
+                        if (!on_floor_prev && flySpeedX == 0) {
+                            // console.log('CASE 1');
+                            forceX = 0;
+                            freezeOnConv = true;
+                        }
+                        else if (freezeOnConv) {
+                            // console.log('CASE 1b');
+                            forceX = 0;
+                        }
+                        else if (!on_floor_prev && flySpeedX == keyForceX) {
+                            // console.log('CASE 2');
+                            forceX = keyForceX;
+                            conveyorForce = 0;
+                        }
+                        else {
+                            // console.log('CASE 3');
+                            forceX = conveyorForce;
+                            freezeOnConv = false;
+                        }
                     }
                     else {
+                        // console.log('CASE 4');
                         forceX = conveyorForce;
+                        freezeOnConv = false;
                     }
+                }
+                else {
+                    forceX = keyForceX;
                 }
 
                 // delayed jump
@@ -158,15 +175,9 @@ function createMiner(x, y, lookingRight, theLevel) {
             evaluate_on_floor();
         }
         else {
-            prev_2_lv = prev_lv;
-            prev_lv = landed_vertically;
             evaluate_on_air();
-            inhibit_conveyor = true;
-            landed_vertically = (forceX != 0);
         }
-
         updatePos();
-
     }
 
     var last_jump_sound_stop_framenumber;
@@ -207,7 +218,9 @@ function createMiner(x, y, lookingRight, theLevel) {
                 }, 40);
                 // console.log('restart');
                 jumped = true;
+                terminalSpeedY = false;
                 on_floor = false;
+                flySpeedX = forceX;
                 speedY = -4;
                 posY += Math.floor(speedY);
                 speedY += 0.5;
@@ -223,11 +236,13 @@ function createMiner(x, y, lookingRight, theLevel) {
                 minDepth = posY;
 
         if (!jumped) {
+            terminalSpeedY = false;
+            flySpeedX = 0;
             forceX = 0;
             speedY = 4;
         }
         if (on_floor_prev) {
-            if (jumped) ;
+            if (jumped);
             else        mw.fall_sound.restart();
         }
 
@@ -245,15 +260,17 @@ function createMiner(x, y, lookingRight, theLevel) {
             forceX = 0;
         }
         else {
-            if      (forceX ===  1) stepRight();
-            else if (forceX === -1) stepLeft();
+            if (!terminalSpeedY) {
+                if      (forceX ===  1) stepRight();
+                else if (forceX === -1) stepLeft();
+            }
 
             posY += Math.floor(speedY);
             speedY += 0.5;
 
             if (speedY > 4) {
+                terminalSpeedY = true;
                 speedY = 4;
-                forceX = 0;
             }
         }
 

@@ -15,7 +15,8 @@ window.music_enabled = true;
 var createLevel = function(level) {
     
     var leftKey, rightKey, upKey;
-    var oKey, pKey, zKey, mKey;
+    var qKey, wKey, eKey, rKey, tKey, uKey, iKey, oKey, pKey;
+    var zKey, xKey, cKey, vKey, bKey, nKey, mKey, spKey;
     var leftBut, rightBut, upBut;
     var keys, conveyors, looses;
     var horizEnemies, vertEnemies, kong, eugene;
@@ -129,10 +130,24 @@ var createLevel = function(level) {
         leftKey = game.input.keyboard.addKey(Phaser.KeyCode.LEFT);
         rightKey = game.input.keyboard.addKey(Phaser.KeyCode.RIGHT);
         upKey = game.input.keyboard.addKey(Phaser.KeyCode.UP);
+        qKey = game.input.keyboard.addKey(Phaser.KeyCode.Q);
+        wKey = game.input.keyboard.addKey(Phaser.KeyCode.W);
+        eKey = game.input.keyboard.addKey(Phaser.KeyCode.E);
+        rKey = game.input.keyboard.addKey(Phaser.KeyCode.R);
+        tKey = game.input.keyboard.addKey(Phaser.KeyCode.T);
+        yKey = game.input.keyboard.addKey(Phaser.KeyCode.Y);
+        uKey = game.input.keyboard.addKey(Phaser.KeyCode.U);
+        iKey = game.input.keyboard.addKey(Phaser.KeyCode.I);
         oKey = game.input.keyboard.addKey(Phaser.KeyCode.O);
         pKey = game.input.keyboard.addKey(Phaser.KeyCode.P);
         zKey = game.input.keyboard.addKey(Phaser.KeyCode.Z);
+        xKey = game.input.keyboard.addKey(Phaser.KeyCode.X);
+        cKey = game.input.keyboard.addKey(Phaser.KeyCode.C);
+        vKey = game.input.keyboard.addKey(Phaser.KeyCode.V);
+        bKey = game.input.keyboard.addKey(Phaser.KeyCode.B);
+        nKey = game.input.keyboard.addKey(Phaser.KeyCode.N);
         mKey = game.input.keyboard.addKey(Phaser.KeyCode.M);
+        spKey = game.input.keyboard.addKey(Phaser.KeyCode.SPACEBAR);
         mKey.onDown.add(pauseAction);
 
         // more keys
@@ -214,9 +229,9 @@ var createLevel = function(level) {
 
     function update_one_frame() {
         // controls states from their individual sources
-        var leftActive  = leftKey.isDown  || leftBut.isDown  || oKey.isDown;
-        var rightActive = rightKey.isDown || rightBut.isDown || pKey.isDown;
-        var upActive    = upKey.isDown    || upBut.isDown    || zKey.isDown;
+        var leftActive  = leftKey.isDown  || leftBut.isDown  || qKey.isDown || eKey.isDown || tKey.isDown || uKey.isDown || oKey.isDown;
+        var rightActive = rightKey.isDown || rightBut.isDown || wKey.isDown || rKey.isDown || yKey.isDown || iKey.isDown || pKey.isDown;
+        var upActive    = upKey.isDown    || upBut.isDown    || zKey.isDown || xKey.isDown || cKey.isDown || vKey.isDown || bKey.isDown || nKey.isDown || spKey.isDown;
 
         // evaluate miner willy: control actions and its consequences
         miner_willy.evaluate(level.tilemap, leftActive, rightActive, upActive);
@@ -757,10 +772,21 @@ var createLevel = function(level) {
             this.x = 8 * this.magX;
             this.y = this.posY;
 
-            this.colrect.x = 0+this.posX;
-            this.colrect.y = 1+this.posY;
-            this.colrect.width = 16;
-            this.colrect.height = 15;
+            if (!this.isSkylabCrashing) {
+                // console.log("total");
+                this.colrect.x = 0+this.posX;
+                this.colrect.y = 1+this.posY;
+                this.colrect.width = 16;
+                this.colrect.height = 14;
+            }
+            else {
+                // partially remove skylab box when it is collapsing
+                // console.log("reduced");
+                this.colrect.x = 0+this.posX;
+                this.colrect.y = 14+this.posY;
+                this.colrect.width = 16;
+                this.colrect.height = 1;
+            }
         }
 
         venemy.updateFrame = function() {
@@ -796,6 +822,7 @@ var createLevel = function(level) {
         var frame = 0;
         var column = 0;
         var x0 = skylab.posX;
+        skylab.isSkylab = true;
 
         skylab.updateFrame = function() {
             var framebase = 8 * level.level_index; 
@@ -805,10 +832,14 @@ var createLevel = function(level) {
 
         skylab.evaluate = function() {
             if (frame == 0) {
-                if (this.isLookingDown && this.posY >= this.ymax)
+                if (this.isLookingDown && this.posY >= this.ymax) {
                     frame = 1;
-                else
+                    skylab.isSkylabCrashing = true;
+                }
+                else {
                     this.posY += this.dy;
+                    skylab.isSkylabCrashing = false;
+                }
             }
             else {
                 frame += 1;
